@@ -4,7 +4,6 @@ import android.content.ContentUris;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -18,7 +17,7 @@ import uk.co.senab.photoview.PhotoView;
 
 /**
  * Desction:
- * Author:pengjianbo  Dujinyang
+ * Author:pengjianbo  Dujinyang DrawGu
  * Date:16/7/21 下午10:12
  */
 public class MediaPreviewAdapter extends RecyclingPagerAdapter {
@@ -50,18 +49,21 @@ public class MediaPreviewAdapter extends RecyclingPagerAdapter {
         if (convertView == null) {
             convertView = View.inflate(container.getContext(), R.layout.gallery_media_image_preview_item, null);
         }
-        PhotoView ivImage = (PhotoView) convertView.findViewById(R.id.iv_media_image);
+        PhotoView ivImage = convertView.findViewById(R.id.iv_media_image);
         Uri uri = null;
+        int orientation = mediaBean.getOrientation();
         if (mediaBean.getWidth() > 1200 || mediaBean.getHeight() > 1200) {
             String path = mediaBean.getThumbnailBigPath();
             uri = Uri.fromFile(new File(path));
         }
         if (uri == null) {
             uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, mediaBean.getId());
+        } else {
+            orientation = 0;
         }
         ivImage.setBackgroundColor(mPageColor);
         mConfiguration.getImageLoader().displayImage(container.getContext(), uri, ivImage, mDefaultImage, mConfiguration.getImageConfig(),
-                false, mConfiguration.isPlayGif(), mScreenWidth, mScreenHeight, mediaBean.getOrientation());
+                false, mConfiguration.isPlayGif(), mScreenWidth, mScreenHeight, orientation);
         return convertView;
     }
 

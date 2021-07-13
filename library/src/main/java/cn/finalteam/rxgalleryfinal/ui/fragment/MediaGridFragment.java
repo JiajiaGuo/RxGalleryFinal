@@ -20,6 +20,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -249,11 +250,11 @@ public class MediaGridFragment extends BaseFragment implements MediaGridView, Re
     @Override
     public void onViewCreatedOk(View view, @Nullable Bundle savedInstanceState) {
 
-        mRvMedia = (RecyclerViewFinal) view.findViewById(R.id.rv_media);
-        mLlEmptyView = (LinearLayout) view.findViewById(R.id.ll_empty_view);
-        mRvBucket = (RecyclerView) view.findViewById(R.id.rv_bucket);
-        mRlBucektOverview = (RelativeLayout) view.findViewById(R.id.rl_bucket_overview);
-        mRlRootView = (RelativeLayout) view.findViewById(R.id.rl_root_view);
+        mRvMedia = view.findViewById(R.id.rv_media);
+        mLlEmptyView = view.findViewById(R.id.ll_empty_view);
+        mRvBucket = view.findViewById(R.id.rv_bucket);
+        mRlBucektOverview = view.findViewById(R.id.rl_bucket_overview);
+        mRlRootView = view.findViewById(R.id.rl_root_view);
 
         mRvMedia.setEmptyView(mLlEmptyView);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), 3);
@@ -263,9 +264,9 @@ public class MediaGridFragment extends BaseFragment implements MediaGridView, Re
         mRvMedia.setOnLoadMoreListener(this);
         mRvMedia.setFooterViewHide(true);
 
-        mTvFolderName = (TextView) view.findViewById(R.id.tv_folder_name);
+        mTvFolderName = view.findViewById(R.id.tv_folder_name);
         mTvFolderName.setOnClickListener(this);
-        mTvPreview = (TextView) view.findViewById(R.id.tv_preview);
+        mTvPreview = view.findViewById(R.id.tv_preview);
         mTvPreview.setOnClickListener(this);
         mTvPreview.setEnabled(false);
         if (mConfiguration.isRadio()) {
@@ -425,21 +426,29 @@ public class MediaGridFragment extends BaseFragment implements MediaGridView, Re
 
     @Override
     public void onRequestMediaCallback(List<MediaBean> list) {
+        boolean cameraAdded = false;
         if (!mConfiguration.isHideCamera()) {
             if (mPage == 1 && TextUtils.equals(mBucketId, String.valueOf(Integer.MIN_VALUE))) {
                 MediaBean takePhotoBean = new MediaBean();
                 takePhotoBean.setId(Integer.MIN_VALUE);
                 takePhotoBean.setBucketId(String.valueOf(Integer.MIN_VALUE));
                 mMediaBeanList.add(takePhotoBean);
+                cameraAdded = true;
             }
         }
         if (list != null && list.size() > 0) {
+            int nextPosition = mMediaBeanList.size();
             mMediaBeanList.addAll(list);
+            if (cameraAdded) {
+                mMediaGridAdapter.notifyDataSetChanged();
+            } else {
+                mMediaGridAdapter.notifyItemRangeInserted(nextPosition, list.size());
+            }
+
             Logger.i(String.format("得到:%s张图片", list.size()));
         } else {
             Logger.i("没有更多图片");
         }
-        mMediaGridAdapter.notifyDataSetChanged();
 
         mPage++;
 
@@ -652,10 +661,10 @@ public class MediaGridFragment extends BaseFragment implements MediaGridView, Re
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(imageFile));
         } else {
-            ContentValues contentValues = new ContentValues(1);
-            contentValues.put(MediaStore.Images.Media.DATA, mImagePath);
-            Uri uri = getContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
-//            Uri uri = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".fileProvider", imageFile);
+//            ContentValues contentValues = new ContentValues(1);
+//            contentValues.put(MediaStore.Images.Media.DATA, mImagePath);
+//            Uri uri = getContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+            Uri uri = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".fileProvider", imageFile);
             captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
             captureIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
                     | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
@@ -832,7 +841,8 @@ public class MediaGridFragment extends BaseFragment implements MediaGridView, Re
                                 int bk = FileUtils.existImageDir(mediaBean.getOriginalPath());
                                 if (bk != -1) {
                                     mMediaBeanList.add(1, mediaBean);
-                                    mMediaGridAdapter.notifyDataSetChanged();
+//                                    mMediaGridAdapter.notifyDataSetChanged();
+                                    mMediaGridAdapter.notifyItemInserted(1);
                                 } else {
                                     Logger.i("获取：无");
                                 }

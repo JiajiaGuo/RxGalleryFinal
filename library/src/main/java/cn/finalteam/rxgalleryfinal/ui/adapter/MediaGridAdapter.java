@@ -1,10 +1,8 @@
 package cn.finalteam.rxgalleryfinal.ui.adapter;
 
-import android.content.ContentUris;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.core.content.ContextCompat;
 import androidx.core.widget.CompoundButtonCompat;
@@ -58,7 +57,7 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.Grid
     private final Drawable mCameraImage;
     private final int mCameraImageBgColor;
     private final int mCameraTextColor;
-    private int imageLoaderType = 0;
+    private int imageLoaderType;
 
     public MediaGridAdapter(
             MediaActivity mediaActivity,
@@ -83,7 +82,7 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.Grid
     }
 
     @Override
-    public GridViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public GridViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view;
         if (imageLoaderType != 3) {
             view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_gallery_media_grid, parent, false);
@@ -95,7 +94,7 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.Grid
 
     @Override
     public void onBindViewHolder(GridViewHolder holder, int position) {
-        MediaBean mediaBean = mMediaBeanList.get(position);
+        MediaBean mediaBean = mMediaBeanList.get(holder.getAdapterPosition());
         if (mediaBean.getId() == Integer.MIN_VALUE) {
             holder.mCbCheck.setVisibility(View.GONE);
             holder.mIvMediaImage.setVisibility(View.GONE);
@@ -128,12 +127,12 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.Grid
                 uri = mediaBean.toUri();
 //                path = mediaBean.getOriginalPath();
             } else {
-                String path = mediaBean.getThumbnailSmallPath();
-                if (TextUtils.isEmpty(path)) {
-                    path = mediaBean.getThumbnailBigPath();
+                String cachePath = mediaBean.getThumbnailSmallPath();
+                if (TextUtils.isEmpty(cachePath)) {
+                    cachePath = mediaBean.getThumbnailBigPath();
                 }
-                uri = Uri.fromFile(new File(path));
-                if (TextUtils.isEmpty(path)) {
+                uri = Uri.fromFile(new File(cachePath));
+                if (TextUtils.isEmpty(cachePath)) {
                     uri = mediaBean.toUri();
                 }
             }
@@ -142,7 +141,7 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.Grid
                 OsCompat.setBackgroundDrawableCompat(holder.mIvMediaImage, mImageViewBg);
                 mConfiguration.getImageLoader()
                         .displayImage(mMediaActivity, uri, (FixImageView) holder.mIvMediaImage, mDefaultImage, mConfiguration.getImageConfig(),
-                                true, mConfiguration.isPlayGif(), mImageSize, mImageSize, mediaBean.getOrientation());
+                                true, mConfiguration.isPlayGif(), mImageSize, mImageSize, 0);
             } else {
                 OsCompat.setBackgroundDrawableCompat(holder.mIvMediaImage, mImageViewBg);
                 FrescoImageLoader.setImageSmall(uri, (SimpleDraweeView) holder.mIvMediaImage,
@@ -170,11 +169,11 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.Grid
         GridViewHolder(View itemView) {
             super(itemView);
             mIvMediaImage = itemView.findViewById(R.id.iv_media_image);
-            mCbCheck = (AppCompatCheckBox) itemView.findViewById(R.id.cb_check);
-            relativeLayout = (SquareRelativeLayout) itemView.findViewById(R.id.rootView);
-            mLlCamera = (LinearLayout) itemView.findViewById(R.id.ll_camera);
-            mTvCameraTxt = (TextView) itemView.findViewById(R.id.tv_camera_txt);
-            mIvCameraImage = (ImageView) itemView.findViewById(R.id.iv_camera_image);
+            mCbCheck = itemView.findViewById(R.id.cb_check);
+            relativeLayout = itemView.findViewById(R.id.rootView);
+            mLlCamera = itemView.findViewById(R.id.ll_camera);
+            mTvCameraTxt = itemView.findViewById(R.id.tv_camera_txt);
+            mIvCameraImage = itemView.findViewById(R.id.iv_camera_image);
 
             int checkTint = ThemeUtils.resolveColor(itemView.getContext(), R.attr.gallery_checkbox_button_tint_color, R.color.gallery_default_checkbox_button_tint_color);
             CompoundButtonCompat.setButtonTintList(mCbCheck, ColorStateList.valueOf(checkTint));

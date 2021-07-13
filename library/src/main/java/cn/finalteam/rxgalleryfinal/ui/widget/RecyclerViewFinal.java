@@ -46,6 +46,15 @@ public class RecyclerViewFinal extends RecyclerView {
      * 刷新数据时停止滑动,避免出现数组下标越界问题
      */
     private final AdapterDataObserver mDataObserver = new AdapterDataObserver() {
+
+        @Override
+        public void onItemRangeInserted(int positionStart, int itemCount) {
+            if (itemCount > 0) {
+                mEmptyView.setVisibility(View.GONE);
+                setVisibility(View.VISIBLE);
+            }
+        }
+
         @Override
         public void onChanged() {
             Adapter<?> adapter = getAdapter();
@@ -85,8 +94,8 @@ public class RecyclerViewFinal extends RecyclerView {
     @SuppressLint("InflateParams")
     private void init(Context context) {
         mFooterView = LayoutInflater.from(context).inflate(R.layout.gallery_loading_view_final_footer_default, null);
-        mPbLoading = (ProgressBar) mFooterView.findViewById(R.id.pb_loading);
-        mTvMessage = (TextView) mFooterView.findViewById(R.id.tv_loading_msg);
+        mPbLoading = mFooterView.findViewById(R.id.pb_loading);
+        mTvMessage = mFooterView.findViewById(R.id.tv_loading_msg);
 
 //        setHasLoadMore(false);
         addOnScrollListener(new RecyclerViewOnScrollListener());
@@ -226,10 +235,10 @@ public class RecyclerViewFinal extends RecyclerView {
         /**
          * 当前滑动的状态
          */
-        private int currentScrollState = 0;
+        private int currentScrollState;
 
         @Override
-        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+        public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
 
             LayoutManager layoutManager = recyclerView.getLayoutManager();
