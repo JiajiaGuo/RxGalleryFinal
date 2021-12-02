@@ -6,6 +6,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 
@@ -56,15 +57,31 @@ public class MediaUtils {
             projection.add(MediaStore.Images.Media.WIDTH);
             projection.add(MediaStore.Images.Media.HEIGHT);
         }
-        String selection = null;
-        String[] selectionArgs = null;
-        if (!TextUtils.equals(bucketId, String.valueOf(Integer.MIN_VALUE))) {
-            selection = MediaStore.Images.Media.BUCKET_ID + "=?";
-            selectionArgs = new String[]{bucketId};
+        Cursor cursor;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Bundle queryArgs = new Bundle();
+            queryArgs.putInt(ContentResolver.QUERY_ARG_LIMIT, limit);
+            queryArgs.putInt(ContentResolver.QUERY_ARG_OFFSET, offset);
+            queryArgs.putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS, new String[]{MediaStore.Images.Media.DATE_ADDED});
+            queryArgs.putInt(ContentResolver.QUERY_ARG_SORT_DIRECTION, ContentResolver.QUERY_SORT_DIRECTION_DESCENDING);
+            if (!TextUtils.equals(bucketId, String.valueOf(Integer.MIN_VALUE))) {
+                queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SELECTION, MediaStore.Images.Media.BUCKET_ID + "=?");
+                queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, new String[]{bucketId});
+            }
+
+            cursor = contentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection.toArray(new String[0]), queryArgs, null);
+        } else {
+            String selection = null;
+            String[] selectionArgs = null;
+            if (!TextUtils.equals(bucketId, String.valueOf(Integer.MIN_VALUE))) {
+                selection = MediaStore.Images.Media.BUCKET_ID + "=?";
+                selectionArgs = new String[]{bucketId};
+            }
+            cursor = contentResolver.query(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection.toArray(new String[0]), selection,
+                    selectionArgs, MediaStore.Images.Media.DATE_ADDED + " DESC LIMIT " + limit + " OFFSET " + offset);
         }
-        Cursor cursor = contentResolver.query(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection.toArray(new String[0]), selection,
-                selectionArgs, MediaStore.Images.Media.DATE_ADDED + " DESC LIMIT " + limit + " OFFSET " + offset);
         if (cursor != null) {
             int count = cursor.getCount();
             if (count > 0) {
@@ -111,16 +128,31 @@ public class MediaUtils {
             projection.add(MediaStore.Video.Media.WIDTH);
             projection.add(MediaStore.Video.Media.HEIGHT);
         }
-        String selection = null;
-        String[] selectionArgs = null;
-        if (!TextUtils.equals(bucketId, String.valueOf(Integer.MIN_VALUE))) {
-            selection = MediaStore.Video.Media.BUCKET_ID + "=?";
-            selectionArgs = new String[]{bucketId};
+        Cursor cursor;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Bundle queryArgs = new Bundle();
+            queryArgs.putInt(ContentResolver.QUERY_ARG_LIMIT, limit);
+            queryArgs.putInt(ContentResolver.QUERY_ARG_OFFSET, offset);
+            queryArgs.putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS, new String[]{MediaStore.Video.Media.DATE_ADDED});
+            queryArgs.putInt(ContentResolver.QUERY_ARG_SORT_DIRECTION, ContentResolver.QUERY_SORT_DIRECTION_DESCENDING);
+            if (!TextUtils.equals(bucketId, String.valueOf(Integer.MIN_VALUE))) {
+                queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SELECTION, MediaStore.Video.Media.BUCKET_ID + "=?");
+                queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, new String[]{bucketId});
+            }
+            cursor = contentResolver.query(
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI, projection.toArray(new String[0]), queryArgs,null
+            );
+        } else {
+            String selection = null;
+            String[] selectionArgs = null;
+            if (!TextUtils.equals(bucketId, String.valueOf(Integer.MIN_VALUE))) {
+                selection = MediaStore.Video.Media.BUCKET_ID + "=?";
+                selectionArgs = new String[]{bucketId};
+            }
+            cursor = contentResolver.query(
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI, projection.toArray(new String[0]), selection,
+                    selectionArgs, MediaStore.Video.Media.DATE_ADDED + " DESC LIMIT " + limit + " OFFSET " + offset);
         }
-
-        Cursor cursor = contentResolver.query(
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI, projection.toArray(new String[projection.size()]), selection,
-                selectionArgs, MediaStore.Video.Media.DATE_ADDED + " DESC LIMIT " + limit + " OFFSET " + offset);
         if (cursor != null) {
             int count = cursor.getCount();
             if (count > 0) {
